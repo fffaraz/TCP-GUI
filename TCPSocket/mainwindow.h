@@ -26,7 +26,9 @@ private slots:
     void socket_error();
     void socket_readyRead();
     void socket_stateChanged();
+
     void log(QString msg);
+    void update(bool connected);
 
 private:
     Ui::MainWindow *ui;

@@ -26,21 +26,32 @@ void MainWindow::on_btnConnect_clicked()
 {
     if(!connected)
     {
-        connected = true;
-        ui->btnConnect->setText("Disconnect");
-        ui->txtIP->setEnabled(false);
-        ui->txtPort->setEnabled(false);
-        ui->btnSend->setEnabled(true);
+        update(true);
         socket.connectToHost(ui->txtIP->text(), ui->txtPort->text().toInt());
     }
     else
     {
-        connected = false;
+        update(false);
+        socket.disconnectFromHost();
+    }
+}
+
+void MainWindow::update(bool connected)
+{
+    this->connected = connected;
+    if(connected)
+    {
+        ui->btnConnect->setText("Disconnect");
+        ui->txtIP->setEnabled(false);
+        ui->txtPort->setEnabled(false);
+        ui->btnSend->setEnabled(true);
+    }
+    else
+    {
         ui->btnConnect->setText("Connect");
         ui->txtIP->setEnabled(true);
         ui->txtPort->setEnabled(true);
         ui->btnSend->setEnabled(false);
-        socket.disconnectFromHost();
     }
 }
 
@@ -56,7 +67,7 @@ void MainWindow::socket_aboutToClose()
 
 void MainWindow::socket_bytesWritten(qint64 bytes)
 {
-    log("socket_bytesWritten : " + QString::number(bytes));
+    log("socket_bytesWritten [" + QString::number(bytes) + "]");
 }
 
 void MainWindow::socket_connected()
@@ -67,6 +78,7 @@ void MainWindow::socket_connected()
 void MainWindow::socket_disconnected()
 {
     log("socket_disconnected");
+    update(false);
 }
 
 void MainWindow::socket_error()
@@ -78,7 +90,8 @@ void MainWindow::socket_readyRead()
 {
     while(socket.bytesAvailable())
     {
-        log(socket.readAll());
+        QByteArray data = socket.readAll();
+        log("socket_readyRead [" + QString::number(data.size()) + "] : \n" + data);
     }
 }
 
@@ -89,5 +102,5 @@ void MainWindow::socket_stateChanged()
 
 void MainWindow::log(QString msg)
 {
-    ui->txtReceive->appendPlainText(msg +"\n---");
+    ui->txtReceive->appendPlainText(msg + "\n---");
 }
