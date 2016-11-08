@@ -55,7 +55,14 @@
      </widget>
     </item>
     <item>
-     <widget class="QPlainTextEdit" name="txtSend"/>
+     <widget class="QPlainTextEdit" name="txtSend">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>150</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
