@@ -38,6 +38,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnListen">
+        <property name="text">
+         <string>Listen</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

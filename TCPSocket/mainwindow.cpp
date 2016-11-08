@@ -7,13 +7,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connected = false;
-    connect(&socket, SIGNAL(aboutToClose()), this, SLOT(socket_aboutToClose()));
-    connect(&socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
-    connect(&socket, SIGNAL(connected()), this, SLOT(socket_connected()));
-    connect(&socket, SIGNAL(disconnected()), this, SLOT(socket_disconnected()));
-    connect(&socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error()));
-    connect(&socket, SIGNAL(readyRead()), this, SLOT(socket_readyRead()));
-    connect(&socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(socket_stateChanged()));
+    socket = nullptr;
+    connect(&server, SIGNAL(newConnection()), this, SLOT(server_newConnection()));
     ui->btnConnect->setFocus();
 }
 
@@ -22,18 +17,43 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::socket_events()
+{
+    connect(socket, SIGNAL(aboutToClose()), this, SLOT(socket_aboutToClose()));
+    connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
+    connect(socket, SIGNAL(connected()), this, SLOT(socket_connected()));
+    connect(socket, SIGNAL(disconnected()), this, SLOT(socket_disconnected()));
+    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(socket_readyRead()));
+    connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(socket_stateChanged()));
+}
+
 void MainWindow::on_btnConnect_clicked()
 {
     if(!connected)
     {
         update(true);
-        socket.connectToHost(ui->txtIP->text(), ui->txtPort->text().toInt());
+        socket = new QTcpSocket(this);
+        socket_events();
+        socket->connectToHost(ui->txtIP->text(), ui->txtPort->text().toInt());
     }
     else
     {
         update(false);
-        socket.disconnectFromHost();
+        server.close();
+        if(socket != nullptr)
+        {
+            socket->disconnectFromHost();
+            socket->deleteLater();
+            socket = nullptr;
+        }
     }
+}
+
+void MainWindow::on_btnListen_clicked()
+{
+    update(true);
+    server.listen(QHostAddress(ui->txtIP->text()), ui->txtPort->text().toInt());
 }
 
 void MainWindow::update(bool connected)
@@ -42,6 +62,7 @@ void MainWindow::update(bool connected)
     if(connected)
     {
         ui->btnConnect->setText("Disconnect");
+        ui->btnListen->setEnabled(false);
         ui->txtIP->setEnabled(false);
         ui->txtPort->setEnabled(false);
         ui->btnSend->setEnabled(true);
@@ -49,6 +70,7 @@ void MainWindow::update(bool connected)
     else
     {
         ui->btnConnect->setText("Connect");
+        ui->btnListen->setEnabled(true);
         ui->txtIP->setEnabled(true);
         ui->txtPort->setEnabled(true);
         ui->btnSend->setEnabled(false);
@@ -57,7 +79,7 @@ void MainWindow::update(bool connected)
 
 void MainWindow::on_btnSend_clicked()
 {
-    socket.write(ui->txtSend->toPlainText().replace('\r', "").replace('\n', "\r\n").toUtf8());
+    socket->write(ui->txtSend->toPlainText().replace('\r', "").replace('\n', "\r\n").toUtf8());
 }
 
 void MainWindow::socket_aboutToClose()
@@ -83,14 +105,14 @@ void MainWindow::socket_disconnected()
 
 void MainWindow::socket_error()
 {
-    log("socket_error : " + socket.errorString());
+    log("socket_error [" + QString::number(socket->error()) + "] : " + socket->errorString());
 }
 
 void MainWindow::socket_readyRead()
 {
-    while(socket.bytesAvailable())
+    while(socket->bytesAvailable())
     {
-        QByteArray data = socket.readAll();
+        QByteArray data = socket->readAll();
         log("socket_readyRead [" + QString::number(data.size()) + "] : \n" + data);
     }
 }
@@ -98,6 +120,14 @@ void MainWindow::socket_readyRead()
 void MainWindow::socket_stateChanged()
 {
     //log("socket_stateChanged");
+}
+
+void MainWindow::server_newConnection()
+{
+    log("server_newConnection");
+    socket = server.nextPendingConnection();
+    socket_events();
+    server.close();
 }
 
 void MainWindow::log(QString msg)
