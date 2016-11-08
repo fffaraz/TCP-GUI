@@ -27,7 +27,7 @@
       <item>
        <widget class="QLineEdit" name="txtPort">
         <property name="text">
-         <string>55000</string>
+         <string>3000</string>
         </property>
        </widget>
       </item>
