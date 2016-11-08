@@ -82,6 +82,11 @@ void MainWindow::on_btnSend_clicked()
     socket->write(ui->txtSend->toPlainText().replace('\r', "").replace('\n', "\r\n").toUtf8());
 }
 
+void MainWindow::on_btnClear_clicked()
+{
+    ui->txtReceive->clear();
+}
+
 void MainWindow::socket_aboutToClose()
 {
     log("socket_aboutToClose");

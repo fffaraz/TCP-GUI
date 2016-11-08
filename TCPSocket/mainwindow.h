@@ -21,6 +21,7 @@ private slots:
     void on_btnConnect_clicked();
     void on_btnListen_clicked();
     void on_btnSend_clicked();
+    void on_btnClear_clicked();
     void socket_aboutToClose();
     void socket_bytesWritten(qint64 bytes);
     void socket_connected();
